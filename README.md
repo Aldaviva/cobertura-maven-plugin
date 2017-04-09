@@ -1,5 +1,6 @@
 cobertura-maven-plugin
 ===
+
 This is a [Maven](https://maven.apache.org/) plugin that lets you measure code coverage of your tests using 
 [Cobertura](https://cobertura.github.io/cobertura/). It's a different project than the official 
 [`org.codehaus.mojo:cobertura-maven-plugin`](http://www.mojohaus.org/cobertura-maven-plugin/).
@@ -14,15 +15,16 @@ This is a [Maven](https://maven.apache.org/) plugin that lets you measure code c
 runtime with a JVM agent like the otherwise-fantastic [JaCoCo](http://www.eclemma.org/jacoco/).
 
 ## Usage
-###Installation
+
+### Installation
 
 Add these snippets to your POM.
 
 ```xml
 <project>
-	<dependencies>
-		<!-- This allows tests to update coverage counters when instructions are executed -->
-		<dependency>
+    <dependencies>
+        <!-- This allows tests to update coverage counters when instructions are executed -->
+        <dependency>
             <groupId>net.sourceforge.cobertura</groupId>
             <artifactId>cobertura</artifactId>
             <version>2.1.1</version>
@@ -30,20 +32,20 @@ Add these snippets to your POM.
         </dependency>
     </dependencies>
     
-	<build>
-		<plugins>
-			<plugin>
+    <build>
+        <plugins>
+            <plugin>
                 <groupId>com.aldaviva.coverage</groupId>
                 <artifactId>cobertura-maven-plugin</artifactId>
                 <version>0.0.1-SNAPSHOT</version>
                 <configuration>
                     <exclusions>
-	                    <!-- Exclude any files you don't want counting against your coverage thresholds. -->
-	                    <!-- Ant path syntax:
-	                         ** = multiple directories
-	                         *  = single directory or multiple characters
-	                         ?  = single character
-	                    -->
+                        <!-- Exclude any files you don't want counting against your coverage thresholds. -->
+                             Ant path syntax:
+                               ** = multiple directories
+                               *  = single directory or multiple characters
+                               ?  = single character
+                        -->
                         <param>**/*Exception.class</param>
                         <param>com/mycompany/myprogram/Untestable.class</param>
                     </exclusions>
@@ -52,8 +54,9 @@ Add these snippets to your POM.
                     <minLineCoveredRatio>0.80</minLineCoveredRatio>
                     <minBranchCoveredRatio>0.80</minBranchCoveredRatio>
                 </configuration>
+
                 <executions>
-	                <!-- Add instrumentation instructions to bytecode before tests run -->
+                    <!-- Add instrumentation instructions to bytecode before tests run -->
                     <execution>
                         <id>instrument</id>
                         <goals>
@@ -62,7 +65,7 @@ Add these snippets to your POM.
                         <phase>process-test-classes</phase>
                     </execution>
 
-					<!-- Restore uninstrumented class files after tests are done, and fail the build if coverage thresholds were not met -->
+                    <!-- Restore uninstrumented class files after tests are done, and fail the build if coverage thresholds were not met -->
                     <execution>
                         <id>check</id>
                         <goals>
