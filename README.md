@@ -151,3 +151,7 @@ Tests run: 1, Failures: 0, Errors: 0, Skipped: 0
 ```
 
 Cobertura's data file will be saved as `cobertura.ser` in the `${project.baseDir}` directory, so your build machine can generate useful coverage reports.
+
+## Acknowledgements
+- [jacoco-maven-plugin](http://www.eclemma.org/jacoco/trunk/doc/maven.html) for showing me the light that build systems shouldn't have to run tests twice just to measure coverage.
+- [Michel Pawlak](http://www.pawlak.ch/)'s [qualinsight-mojo-cobertura](https://github.com/QualInsight/qualinsight-mojo-cobertura) plugin for the idea to backup, instrument, and restore the entire `classes` directory.
