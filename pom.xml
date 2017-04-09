@@ -7,8 +7,37 @@
     <version>0.0.1-SNAPSHOT</version>
     <packaging>maven-plugin</packaging>
 
-    <name>com.aldaviva.coverage.cobertura.maven Maven Mojo</name>
-    <url>http://maven.apache.org</url>
+    <name>Cobertura Maven Plugin</name>
+    <description>Another Maven plugin to measure Java code coverage using Cobertura, this time with build-failing thresholds and tests that only run once.</description>
+    <url>https://github.com/Aldaviva/cobertura-maven-plugin</url>
+    <inceptionYear>2017</inceptionYear>
+
+    <developers>
+        <developer>
+            <name>Ben Hutchison</name>
+            <email>ben@aldaviva.com</email>
+            <url>https://aldaviva.com</url>
+            <timezone>-7</timezone>
+        </developer>
+    </developers>
+
+    <licenses>
+        <license>
+            <name>GNU General Public License v2.0</name>
+            <url>http://www.gnu.org/licenses/gpl-2.0.txt</url>
+        </license>
+    </licenses>
+
+    <scm>
+        <url>https://github.com/Aldaviva/cobertura-maven-plugin</url>
+        <connection>scm:git:git://github.com/Aldaviva/cobertura-maven-plugin.git</connection>
+        <developerConnection>scm:git:ssh://github.com:Aldaviva/cobertura-maven-plugin.git</developerConnection>
+    </scm>
+
+    <issueManagement>
+        <url>https://github.com/Aldaviva/cobertura-maven-plugin/issues</url>
+        <system>GitHub</system>
+    </issueManagement>
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
