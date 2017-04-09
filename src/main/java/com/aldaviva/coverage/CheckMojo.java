@@ -15,43 +15,80 @@ import org.apache.maven.plugins.annotations.LifecyclePhase;
 import org.apache.maven.plugins.annotations.Mojo;
 import org.springframework.util.FileSystemUtils;
 
+/**
+ * This class runs after your tests are finishes and checks to see if they executed enough lines of your code under test.
+ * If not, the build fails.
+ */
 @Mojo(name = "check", defaultPhase = LifecyclePhase.VERIFY, threadSafe = true)
 public class CheckMojo extends AbstractCoberturaMojo {
 
     public void execute() throws MojoExecutionException, MojoFailureException {
         FileLocker.class.getName(); //force classloader to load FileLocker before shutdown hook is called, avoiding a NoClassDefFoundException
-        getLog().info("checking to make sure minimum line covered ratio is at least " + (minLineCoveredRatio * 100) + "%");
-        Arguments args = getCoberturaArguments();
-        Cobertura cobertura = new Cobertura(args).calculateCoverage().checkThresholds().saveProjectData();
-        Report report = cobertura.report();
-        List<CoverageResultEntry> coverages = ((CoverageThresholdsReport) report.getByName(ReportName.THRESHOLDS_REPORT)).getCoverageResultEntries();
-        boolean isLineCoveragePassing = true;
-        boolean isBranchCoveragePassing = true;
-        for (CoverageResultEntry coverage : coverages) {
-            //getLog().info(coverage.getName() + " (" + coverage.getCoverageType() + " " + coverage.getCoverageLevel() + "): " + coverage.getCurrentCoverage() + "/" + coverage.getExpectedCoverage());
-            if ("PROJECT".equals(String.valueOf(coverage.getCoverageLevel()))) {
-                if ("BRANCH".equals(String.valueOf(coverage.getCoverageType()))) {
-                    getLog().info("branch coverage: "+coverage.getCurrentCoverage()*100 +"% (minimum "+coverage.getExpectedCoverage()*100+"% required)");
-                    isBranchCoveragePassing = !coverage.isBelowExpectedCoverage();
-                } else if ("LINE".equals(String.valueOf(coverage.getCoverageType()))) {
-                    getLog().info("line coverage: "+coverage.getCurrentCoverage()*100 +"% (minimum "+coverage.getExpectedCoverage()*100+"% required)");
-                    isLineCoveragePassing = !coverage.isBelowExpectedCoverage();
+
+        final Arguments args = getCoberturaArguments();
+        final Cobertura cobertura = new Cobertura(args).calculateCoverage().checkThresholds()/*.saveProjectData()*/;
+        final Report report = cobertura.report();
+
+        final boolean isLineCoveragePassing = isCoveragePassing(report, "Line");
+        final boolean isBranchCoveragePassing = isCoveragePassing(report, "Branch");
+
+        restoreUninstrumentedClassFiles();
+
+        if (!isLineCoveragePassing || !isBranchCoveragePassing) {
+            throw new MojoFailureException("Coverage checks not met");
+        }
+    }
+
+    private boolean isCoveragePassing(final Report report, final String coverageType) {
+        final CoverageResultEntry coverage = getProjectCoverage(report, coverageType.toUpperCase());
+        if (coverage != null && !Double.isNaN(coverage.getCurrentCoverage())) {
+            getLog().info(coverageType + " coverage: " + renderPercentage(coverage.getCurrentCoverage()) + " actual, "
+                    + renderPercentage(coverage.getExpectedCoverage()) + " required.");
+
+            return !coverage.isBelowExpectedCoverage();
+        } else {
+            return true;
+        }
+    }
+
+    private static String renderPercentage(double percentage) {
+        return String.format("%.1f%%", percentage * 100.0);
+    }
+
+    /**
+     * @param coberturaReport the result of calling {@link Cobertura#report()}
+     * @param coverageType one of {@code BRANCH} or {@code LINE}
+     * @return double in the range [0,1] where 0 represents no coverage and 1 represents full coverage. If {@code coverageType}
+     * is unknown, will return 0.
+     */
+    private CoverageResultEntry getProjectCoverage(final Report coberturaReport, final String coverageType) {
+        final List<CoverageResultEntry> coverages = ((CoverageThresholdsReport) coberturaReport
+                .getByName(ReportName.THRESHOLDS_REPORT)).getCoverageResultEntries();
+
+        for (final CoverageResultEntry coverage : coverages) {
+            if ("PROJECT".equals(String.valueOf(coverage.getCoverageLevel())) && coverageType.equals(String.valueOf(coverage.getCoverageType()))) {
+                if (coverage.getCurrentCoverage() != Double.NaN) {
+                    // for some reason, cobertura only measures and reports branch or line coverage if you give it a threshold > 0 for branches or lines, respectively
+                    // this means you can't measure coverage without enforcing it
+                    return coverage;
+                } else {
+                    // user did not specify a threshold for this check, so Cobertura didn't measure it
+                    return null;
                 }
             }
         }
 
-        // restore uninstrumented class files
-        File classesDir = new File(project.getBuild().getOutputDirectory());
-        File uninstrumentedClassesDir = new File(project.getBuild().getDirectory(), "uninstrumented-classes");
+        // Cobertura report didn't contain PROJECT result for some reason. Not aware of any situation that would cause this.
+        return null;
+    }
+
+    /**
+     * Restores the backup created by {@link InstrumentMojo#backupUninstrumentedClasses()}.
+     */
+    private void restoreUninstrumentedClassFiles() {
+        final File classesDir = new File(project.getBuild().getOutputDirectory());
+        final File uninstrumentedClassesDir = new File(project.getBuild().getDirectory(), UNINSTRUMENTED_CLASSES_DIR);
         FileSystemUtils.deleteRecursively(classesDir);
         uninstrumentedClassesDir.renameTo(classesDir);
-
-        if(!isLineCoveragePassing){
-            getLog().error("Line coverage check not met.");
-            throw new MojoFailureException("Line coverage check not met");
-        } else if(!isBranchCoveragePassing){
-            getLog().error("Branch coverage check not met.");
-            throw new MojoFailureException("Branch coverage check not met");
-        }
     }
 }
